@@ -21,6 +21,8 @@
 #include <QScreen>
 #include <QPainter>
 #include <QMessageBox>
+#include <QGraphicsScene>
+#include <QGraphicsVideoItem>
 
 #include <Config.h>
 #include "../Helper.h"
@@ -59,7 +61,7 @@ protected:
         DrawX(painter);
     }
 
-    void enterEvent(QEvent *event) override
+    void enterEvent(QEnterEvent *event) override
     {
         _isHovering = true;
         repaint();
@@ -128,21 +130,47 @@ protected:
 
 //////////////////////////////////////////////////
 
-class VideoWidget : public QVideoWidget
+class VideoWidget : public QGraphicsView
 {
     Q_OBJECT
 
 public:
-    using QVideoWidget::QVideoWidget;
+    explicit VideoWidget(QWidget *parent = nullptr) : QGraphicsView{parent}
+    {
+        setScene(new QGraphicsScene{this});
+        _videoItem = new QGraphicsVideoItem{};
+        scene()->addItem(_videoItem);
+        setBackgroundBrush(Qt::white);
+        setFrameStyle(QFrame::NoFrame);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    }
+
+    QGraphicsVideoItem *videoItem() const { return _videoItem; }
+
+    void setAspectRatioMode(Qt::AspectRatioMode mode)
+    {
+        _videoItem->setAspectRatioMode(mode);
+    }
 
 Q_SIGNALS:
     void Clicked();
 
-private:
+protected:
     void mouseReleaseEvent(QMouseEvent *event) override
     {
         Q_EMIT Clicked();
     }
+
+    void resizeEvent(QResizeEvent *event) override
+    {
+        QGraphicsView::resizeEvent(event);
+        _videoItem->setSize(QSizeF{size()});
+        scene()->setSceneRect(QRectF{QPointF{}, QSizeF{size()}});
+    }
+
+private:
+    QGraphicsVideoItem *_videoItem;
 };
 
 //////////////////////////////////////////////////
@@ -214,7 +242,7 @@ MainWindow::MainWindow(QWidget *parent) : QDialog{parent}
     connect(&_posAnimation, &QPropertyAnimation::finished, this, &MainWindow::OnPosMoveFinished);
     connect(_videoWidget, &VideoWidget::Clicked, this, &MainWindow::OnAnimationClicked);
     connect(_closeButton, &CloseButton::Clicked, this, &MainWindow::DoHide);
-    connect(_mediaPlayer, &QMediaPlayer::stateChanged, this, &MainWindow::OnPlayerStateChanged);
+    connect(_mediaPlayer, &QMediaPlayer::playbackStateChanged, this, &MainWindow::OnPlayerStateChanged);
 
     connect(this, &MainWindow::UpdateStateSafely, this, &MainWindow::UpdateState);
     connect(this, &MainWindow::AvailableSafely, this, &MainWindow::Available);
@@ -229,8 +257,8 @@ MainWindow::MainWindow(QWidget *parent) : QDialog{parent}
 
     _posAnimation.setDuration(500);
     _autoHideTimer->callOnTimeout([this] { DoHide(); });
-    _mediaPlayer->setMuted(true);
-    _mediaPlayer->setVideoOutput(_videoWidget);
+    _mediaPlayer->setVideoOutput(_videoWidget->videoItem());
+    _videoWidget->setAspectRatioMode(Qt::IgnoreAspectRatio);
 
     _ui.layoutAnimation->addWidget(_videoWidget);
     _ui.layoutPods->addWidget(_leftBattery);
@@ -395,7 +423,7 @@ void MainWindow::SetAnimation(std::optional<Core::AirPods::Model> model)
 
     if (!model.has_value()) {
         StopAnimation();
-        _mediaPlayer->setMedia(QMediaContent{});
+        _mediaPlayer->setSource(QUrl{});
     }
     else {
         QString media;
@@ -430,6 +458,7 @@ void MainWindow::SetAnimation(std::optional<Core::AirPods::Model> model)
             videoSize = QSize{900, 450};
             break;
         case Core::AirPods::Model::AirPods_Max:
+        case Core::AirPods::Model::AirPods_Max_2:
             media = "qrc:/Resource/Video/AirPods_Max.avi";
             videoSize = QSize{600, 650};
             break;
@@ -450,7 +479,7 @@ void MainWindow::SetAnimation(std::optional<Core::AirPods::Model> model)
         auto widgetWidth = _videoWidget->height() * aspectRatio;
         _videoWidget->setFixedWidth(widgetWidth);
 
-        _mediaPlayer->setMedia(QUrl{media});
+        _mediaPlayer->setSource(QUrl{media});
 
         PlayAnimation();
     }
@@ -666,7 +695,7 @@ void MainWindow::OnButtonClicked()
 }
 
 // for loop play
-void MainWindow::OnPlayerStateChanged(QMediaPlayer::State newState)
+void MainWindow::OnPlayerStateChanged(QMediaPlayer::PlaybackState newState)
 {
     if (newState == QMediaPlayer::StoppedState && _isAnimationPlaying) {
         _mediaPlayer->play();

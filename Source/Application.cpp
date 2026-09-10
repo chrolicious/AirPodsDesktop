@@ -30,8 +30,10 @@
 
 void ApdApplication::PreConstruction()
 {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     setAttribute(Qt::AA_DisableWindowContextHelpButton);
     setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
 }
 
 void ApdApplication::InitSettings(Core::Settings::LoadResult loadResult)

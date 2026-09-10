@@ -23,7 +23,6 @@
 
 #include <QTimer>
 #include <QMediaPlayer>
-#include <QMediaPlaylist>
 
 using namespace std::chrono_literals;
 
@@ -43,7 +42,6 @@ private:
     constexpr static inline auto kRetryInterval = 30s;
 
     std::unique_ptr<QMediaPlayer> _mediaPlayer;
-    std::unique_ptr<QMediaPlaylist> _mediaPlaylist;
     QTimer _initTimer;
     bool _inited{false}, _enabled{false};
 

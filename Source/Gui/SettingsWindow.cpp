@@ -52,7 +52,7 @@ public:
 private:
     QString _text;
 
-    void enterEvent(QEvent *event) override
+    void enterEvent(QEnterEvent *event) override
     {
         QToolTip::showText(QCursor::pos(), _text, this);
     }
@@ -322,13 +322,13 @@ void SettingsWindow::Update(const Fields &fields, bool trigger)
 void SettingsWindow::UpdateAdvOverride()
 {
     auto advsStr = _ui.teAdvOverride->toPlainText();
-    auto vAdvsStr = advsStr.split('\n', QString::SkipEmptyParts);
+    auto vAdvsStr = advsStr.split('\n', Qt::SkipEmptyParts);
 
     std::vector<std::vector<uint8_t>> advs;
 
     for (const auto &advStr : vAdvsStr) {
 
-        auto advBytesStr = advStr.split(' ', QString::SkipEmptyParts);
+        auto advBytesStr = advStr.split(' ', Qt::SkipEmptyParts);
 
         std::vector<uint8_t> bytes;
         for (const auto advByteStr : advBytesStr) {

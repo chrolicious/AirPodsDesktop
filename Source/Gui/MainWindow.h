@@ -22,7 +22,7 @@
 
 #include "ui_MainWindow.h"
 
-#include <QVideoWidget>
+#include <QGraphicsView>
 #include <QMediaPlayer>
 #include <QPropertyAnimation>
 
@@ -112,7 +112,7 @@ private:
     void OnPosMoveFinished();
     void OnAnimationClicked();
     void OnButtonClicked();
-    void OnPlayerStateChanged(QMediaPlayer::State newState);
+    void OnPlayerStateChanged(QMediaPlayer::PlaybackState newState);
 
     void DoHide();
     void showEvent(QShowEvent *event) override;

@@ -20,7 +20,6 @@
 
 #include <QWindow>
 #include <QApplication>
-#include <QDesktopWidget>
 
 #include "../Core/OS/Windows.h"
 #include "../Application.h"

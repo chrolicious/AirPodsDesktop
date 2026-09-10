@@ -114,6 +114,12 @@ if (MSVC)
         "/await"        # Enable the legacy pre-C++20 coroutine.
                         # Workaround for cppwinrt v2.0.200609.3 in C++20.
                         # For more information, see https://github.com/microsoft/cppwinrt/issues/866
+
+        "/FI${CMAKE_SOURCE_DIR}/Source/stdext_compat.h"  # stdext compat for Qt 6.5.x with VS2022+
+        "/Zc:headerUnit-"  # disable implicit header units so assert.h re-includes work correctly
+    )
+    add_compile_definitions(
+        _SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
     )
 endif()
 
@@ -124,11 +130,12 @@ endif()
 # Qt
 #
 set(APD_QT_COMPONENTS Core Gui Widgets Svg Multimedia MultimediaWidgets)
+find_package(QT NAMES Qt6 Qt5 COMPONENTS ${APD_QT_COMPONENTS} REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${APD_QT_COMPONENTS} REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR}LinguistTools REQUIRED)
 foreach (QT_COMPONENT ${APD_QT_COMPONENTS})
-    set(APD_QT_LIBRARIES ${APD_QT_LIBRARIES} Qt5::${QT_COMPONENT})
+    set(APD_QT_LIBRARIES ${APD_QT_LIBRARIES} Qt${QT_VERSION_MAJOR}::${QT_COMPONENT})
 endforeach()
-find_package(Qt5 COMPONENTS ${APD_QT_COMPONENTS} REQUIRED)
-find_package(Qt5LinguistTools REQUIRED)
 
 # spdlog
 #
@@ -318,7 +325,7 @@ endif()
 
 # Resource
 
-qt5_add_resources(APD_CODE_FILES "Source/Resource/Resource.qrc")
+qt_add_resources(APD_CODE_FILES "Source/Resource/Resource.qrc")
 
 #
 # Translation
@@ -350,7 +357,7 @@ set_source_files_properties(${APD_TS_FILES} PROPERTIES OUTPUT_LOCATION ${APD_QM_
 
 add_custom_target(
     APD_CREATE_UPDATE_TS
-    COMMAND ${Qt5_LUPDATE_EXECUTABLE} -recursive "${CMAKE_SOURCE_DIR}/Source/"
+    COMMAND "${Qt${QT_VERSION_MAJOR}_DIR}/../../../bin/lupdate" -recursive "${CMAKE_SOURCE_DIR}/Source/"
                                       -ts ${APD_TS_FILES}
                                       -no-obsolete
                                       -locations none
@@ -361,7 +368,7 @@ add_custom_target(
 # Add .ts files as .qm files
 #
 
-qt5_add_translation(
+qt_add_translation(
     APD_QM_FILES
     ${APD_TS_FILES}
 )
@@ -392,7 +399,7 @@ if (MSVC)
         add_custom_command(
             TARGET ${PROJECT_NAME}
             POST_BUILD
-            COMMAND "${Qt5_DIR}/../../../bin/windeployqt" "${APD_BINARY_OUT_DIR}/${PROJECT_NAME}.exe"
+            COMMAND "${Qt${QT_VERSION_MAJOR}_DIR}/../../../bin/windeployqt" "${APD_BINARY_OUT_DIR}/${PROJECT_NAME}.exe"
             COMMENT "Deploying Qt..."
         )
     endif()

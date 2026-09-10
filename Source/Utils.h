@@ -169,7 +169,7 @@ namespace File {
 
 inline QDir GetWorkspace()
 {
-    auto location = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    auto location = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
 
     QDir result{std::move(location)};
     if (!result.exists()) {

@@ -266,7 +266,7 @@ std::optional<QImage> TrayIcon::GenerateIcon(
         const auto &font = optFont.value();
         const auto &fontMetrics = QFontMetrics{font};
 
-        const auto textWidth = fontMetrics.width(text);
+        const auto textWidth = fontMetrics.horizontalAdvance(text);
         textHeight = fontMetrics.height();
 
         constexpr auto kMargin = QSizeF{2, 0};

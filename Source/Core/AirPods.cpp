@@ -470,8 +470,10 @@ void Manager::OnStateChanged(Details::StateManager::UpdateEvent updateEvent)
     const auto &oldState = updateEvent.oldState;
     auto &newState = updateEvent.newState;
 
+    // AirPods Max 2 Bluetooth name is "AirPods Max" same as original; use model string to distinguish.
+    bool useModelName = _deviceName.isEmpty() || newState.model == Model::AirPods_Max_2;
     newState.displayName =
-        _deviceName.isEmpty() ? Helper::ToString(newState.model) : _deviceName.remove(" - Find My");
+        useModelName ? Helper::ToString(newState.model) : _deviceName.remove(" - Find My");
 
     ApdApp->GetMainWindow()->UpdateStateSafely(newState);
 
@@ -587,8 +589,8 @@ std::vector<Bluetooth::Device> GetDevices()
                     vendorId != AppleCP::VendorId ||
                     AppleCP::AirPods::GetModel(productId) == AirPods::Model::Unknown;
 
-                LOG(Trace, "Device VendorId: '{}', ProductId: '{}', doErase: {}", vendorId,
-                    productId, doErase);
+                LOG(Info, "Device VendorId: '{}' (0x{:04X}), ProductId: '{}' (0x{:04X}), doErase: {}", vendorId,
+                    vendorId, productId, productId, doErase);
 
                 return doErase;
             }),
